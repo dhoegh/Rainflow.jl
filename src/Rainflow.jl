@@ -1,5 +1,98 @@
 module Rainflow
 
-# package code goes here
+import PyPlot.plot
+
+export sort_peaks, check_max, find_cycles
+
+function sort_peaks(signal::AbstractArray{Float64,1}, dt=[0.:length(signal)-1.])
+    """ This sort out points where the slope is changing sign"""
+    slope = diff(signal)
+    # Determines if the point is local extremum
+    is_extremum = [true ;(slope[1:end-1].*slope[2:end]).<=0.;true] 
+    return signal[is_extremum] , dt[is_extremum]
+end
+
+type Cycle  # This is the information stored for each cycle found
+    count::Float64
+    range::Float64
+    mean::Float64  # value
+    v_s::Float64   # value start
+    t_s::Float64   # time start
+    v_e::Float64   # value end
+    t_e::Float64   # time end
+end
+
+type cycle_stats # 
+    min_mean::Float64
+    max_mean::Float64
+    max_range::Float64
+end
+
+function check_max(cycles::Array{Cycle,1})
+    stats = cycle_stats(Inf, -Inf, -Inf)
+    for cycle in cycles
+        cycle.mean > stats.max_mean && setfield!(stats, :max_mean, cycle.mean)
+        cycle.mean < stats.min_mean && setfield!(stats, :min_mean, cycle.mean)
+        cycle.range > stats.max_range && setfield!(stats, :max_range, cycle.range)
+    end
+    return stats
+end
+
+function cycle(count::Float64, v_s::Float64, t_s::Float64, v_e::Float64, t_e::Float64)
+    Cycle(count, abs(v_s-v_e), (v_s+v_e)/2, v_s, t_s, v_e, t_e)
+end
+
+function plot(cycle::Cycle)
+    time = linrange(cycle.t_s,cycle.t_e,25)
+    amplitude = abs(cycle.v_s-cycle.v_e)/2
+    dt = cycle.t_s-cycle.t_e
+    if cycle.count==1
+        plot(time, cycle.mean+sign(cycle.v_s-cycle.v_e)*amplitude*cos(2π/dt*(time-cycle.t_s)))
+    else
+        plot(time, cycle.mean+sign(cycle.v_s-cycle.v_e)*amplitude*cos(π/dt*(time-cycle.t_s)))
+    end
+end
+
+plot(result::Array{Cycle,1}) = for cyc in result plot(cyc) end
+
+function find_cycles(ext_in::Array{Float64,1},t::Array{Float64,1})
+    ext = copy(ext_in) # Makes a copy because there is going to be sorted in the vectors
+    time = copy(t) 
+    i = 1
+    j = 2
+    cycles = Cycle[]
+    sizehint(cycles, length(ext)) # This reduces the memory consumption a bit
+    @inbounds begin
+    while length(ext)>(i+1)
+        Y = abs(ext[i+1]-ext[i])
+        X = abs(ext[j+1]-ext[j])
+        if X>=Y
+            if i == 1 # This case covers a half cycle deletes the poit that is counted
+                #println("Half cycle $(ext[i]), $(ext[i+1])")
+                push!(cycles,cycle(0.5 ,ext[i], time[i], ext[i+1],time[i+1]))
+                shift!(ext) # Removes the first entrance in ext and time
+                shift!(time)
+            else # This case covers a one cycle deletes the poit that is counted
+                #println("One cycle $(ext[i]), $(ext[i+1])")
+                push!(cycles,cycle(1. ,ext[i], time[i], ext[i+1],time[i+1]))
+                splice!(ext,i+1)  # Removes the i and i+1 entrance in ext and time
+                splice!(ext,i)
+                splice!(time,i+1)
+                splice!(time,i)
+            end
+            i = 1
+            j = 2
+        else
+            i += 1
+            j += 1
+        end
+    end
+    for i=1:length(ext)-1 # This counts the rest of the points that have not been counted as a half cycle
+        #println("Half cycle $(ext[i]), $(ext[i+1])")
+        push!(cycles,cycle(0.5 ,ext[i], time[i], ext[i+1],time[i+1]))
+    end
+    return cycles
+    end
+end
 
 end # module
