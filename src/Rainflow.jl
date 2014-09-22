@@ -2,7 +2,7 @@ module Rainflow
 
 import PyPlot.plot
 
-export sort_peaks, check_max, find_cycles
+export sort_peaks, check_max, find_cycles, calc_sum
 
 function sort_peaks(signal::AbstractArray{Float64,1}, dt=[0.:length(signal)-1.])
     """ This sort out points where the slope is changing sign"""
@@ -22,38 +22,9 @@ type Cycle  # This is the information stored for each cycle found
     t_e::Float64   # time end
 end
 
-type cycle_stats # 
-    min_mean::Float64
-    max_mean::Float64
-    max_range::Float64
-end
-
-function check_max(cycles::Array{Cycle,1})
-    stats = cycle_stats(Inf, -Inf, -Inf)
-    for cycle in cycles
-        cycle.mean > stats.max_mean && setfield!(stats, :max_mean, cycle.mean)
-        cycle.mean < stats.min_mean && setfield!(stats, :min_mean, cycle.mean)
-        cycle.range > stats.max_range && setfield!(stats, :max_range, cycle.range)
-    end
-    return stats
-end
-
 function cycle(count::Float64, v_s::Float64, t_s::Float64, v_e::Float64, t_e::Float64)
     Cycle(count, abs(v_s-v_e), (v_s+v_e)/2, v_s, t_s, v_e, t_e)
 end
-
-function plot(cycle::Cycle)
-    time = linrange(cycle.t_s,cycle.t_e,25)
-    amplitude = abs(cycle.v_s-cycle.v_e)/2
-    dt = cycle.t_s-cycle.t_e
-    if cycle.count==1
-        plot(time, cycle.mean+sign(cycle.v_s-cycle.v_e)*amplitude*cos(2π/dt*(time-cycle.t_s)))
-    else
-        plot(time, cycle.mean+sign(cycle.v_s-cycle.v_e)*amplitude*cos(π/dt*(time-cycle.t_s)))
-    end
-end
-
-plot(result::Array{Cycle,1}) = for cyc in result plot(cyc) end
 
 function find_cycles(ext_in::Array{Float64,1},t::Array{Float64,1})
     ext = copy(ext_in) # Makes a copy because there is going to be sorted in the vectors
@@ -93,6 +64,68 @@ function find_cycles(ext_in::Array{Float64,1},t::Array{Float64,1})
     end
     return cycles
     end
+end
+
+type cycle_stats # 
+    min_mean::Float64
+    max_mean::Float64
+    max_range::Float64
+end
+
+function check_max(cycles::Array{Cycle,1})
+    stats = cycle_stats(Inf, -Inf, -Inf)
+    for cycle in cycles
+        cycle.mean > stats.max_mean && setfield!(stats, :max_mean, cycle.mean)
+        cycle.mean < stats.min_mean && setfield!(stats, :min_mean, cycle.mean)
+        cycle.range > stats.max_range && setfield!(stats, :max_range, cycle.range)
+    end
+    return stats
+end
+
+function plot(cycle::Cycle)
+    time = linrange(cycle.t_s,cycle.t_e,25)
+    amplitude = abs(cycle.v_s-cycle.v_e)/2
+    dt = cycle.t_s-cycle.t_e
+    if cycle.count==1
+        plot(time, cycle.mean+sign(cycle.v_s-cycle.v_e)*amplitude*cos(2π/dt*(time-cycle.t_s)))
+    else
+        plot(time, cycle.mean+sign(cycle.v_s-cycle.v_e)*amplitude*cos(π/dt*(time-cycle.t_s)))
+    end
+end
+
+plot(cycles::Array{Cycle,1}) = for cyc in cycles plot(cyc) end
+
+function calc_sum{T<:Real}(cycles::Array{Cycle,1}, range_spacing::Array{T,1}, mean_spacing::Array{T,1})
+    stats = check_max(cycles)
+    bins = zeros(length(range_spacing)-1, length(mean_spacing)-1)
+    range_spacing *= stats.max_range/100
+    #show(range_spacing)
+    mean_spacing *= (stats.max_mean-stats.min_mean)/100
+    mean_spacing += stats.min_mean
+    #show(mean_spacing)
+    for cycle in cycles
+        k=false
+        for i=1:length(range_spacing)-1
+            if round(range_spacing[i],15)< round(cycle.range,15) <= round(range_spacing[i+1],15)
+                for j=1:length(mean_spacing)-1
+                    if round(mean_spacing[j],15)<= round(cycle.mean,15) <= round(mean_spacing[j+1],15)
+                        bins[i,j] += cycle.count
+                        k=true
+                    end
+                end
+            end
+        end
+        if !k
+            error("A cylce is missed in the counting")
+        end
+    end
+    return bins
+end
+
+function calc_sum(cycles::Array{Cycle,1}, nr_ranges::Int=13, nr_means::Int=1)
+    range_spacing = linspace(0,100,nr_ranges+1)
+    mean_spacing = linspace(0,100,nr_means+1)
+    calc_sum(cycles, range_spacing, mean_spacing)
 end
 
 end # module
