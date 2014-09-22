@@ -2,9 +2,8 @@ module Rainflow
 
 export sort_peaks, check_max, find_cycles, calc_sum
 
-if Pkg.installed("PyPlot")
-  include("plot.jl")
-end
+
+
 
 function sort_peaks(signal::AbstractArray{Float64,1}, dt=[0.:length(signal)-1.])
     """ This sort out points where the slope is changing sign"""
@@ -115,6 +114,12 @@ function calc_sum(cycles::Array{Cycle,1}, nr_ranges::Int=13, nr_means::Int=1)
     range_spacing = linspace(0,100,nr_ranges+1)
     mean_spacing = linspace(0,100,nr_means+1)
     calc_sum(cycles, range_spacing, mean_spacing)
+end
+
+try
+	include("plot.jl")
+catch
+	println("""For added plotting features do: Pkg.add("PyPlot")""")
 end
 
 end # module
