@@ -1,8 +1,10 @@
 module Rainflow
 
-import PyPlot.plot
-
 export sort_peaks, check_max, find_cycles, calc_sum
+
+if Pkg.installed("PyPlot")
+  include("plot.jl")
+end
 
 function sort_peaks(signal::AbstractArray{Float64,1}, dt=[0.:length(signal)-1.])
     """ This sort out points where the slope is changing sign"""
@@ -81,19 +83,6 @@ function check_max(cycles::Array{Cycle,1})
     end
     return stats
 end
-
-function plot(cycle::Cycle)
-    time = linrange(cycle.t_s,cycle.t_e,25)
-    amplitude = abs(cycle.v_s-cycle.v_e)/2
-    dt = cycle.t_s-cycle.t_e
-    if cycle.count==1
-        plot(time, cycle.mean+sign(cycle.v_s-cycle.v_e)*amplitude*cos(2π/dt*(time-cycle.t_s)))
-    else
-        plot(time, cycle.mean+sign(cycle.v_s-cycle.v_e)*amplitude*cos(π/dt*(time-cycle.t_s)))
-    end
-end
-
-plot(cycles::Array{Cycle,1}) = for cyc in cycles plot(cyc) end
 
 function calc_sum{T<:Real}(cycles::Array{Cycle,1}, range_spacing::Array{T,1}, mean_spacing::Array{T,1})
     stats = check_max(cycles)
