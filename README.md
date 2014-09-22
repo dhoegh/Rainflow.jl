@@ -19,7 +19,7 @@ bar([1:13],squeeze(bins,2),0.75)
 xlim(1,14)
 
 L = [0, 40, 45, 50, 55, 60, 100.]
-b = calc_sum(result,L,[0.,100.])
+b = calc_sum(cycles,L,[0.,100.])
 figure()
 bar([1:length(b)],squeeze(b,2),0.75)
 xlim(1,length(b))
