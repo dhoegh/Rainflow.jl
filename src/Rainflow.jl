@@ -85,11 +85,11 @@ end
 
 function find_range{T<:Real}(spacing::Array{T,1},value)
     for i=1:length(spacing)-1
-        if round(spacing[i],14)<= round(value,14) <= round(spacing[i+1],14)
+        if spacing[i] <= value <= spacing[i+1]
             return i
         end
     end
-    error("The value where not in range")
+    error("The value where not in range, see if the vector is increasing in value, or adjust the nr_digits parameter")
 end
 
 function calc_sum{T<:Real}(cycles::Array{Cycle,1}, range_spacing::Array{T,1}, mean_spacing::Array{T,1})
@@ -99,10 +99,13 @@ function calc_sum{T<:Real}(cycles::Array{Cycle,1}, range_spacing::Array{T,1}, me
     #show(range_spacing)
     mean_spacing *= (stats.max_mean-stats.min_mean)/100
     mean_spacing += stats.min_mean
+	nr_digits = 14  # The rounding is performed due to numerical noise in the floats when comparing
+	mean_spacing = round(mean_spacing, nr_digits)
+	range_spacing = round(range_spacing, nr_digits)
     #show(mean_spacing)
     for cycle in cycles
-        i = find_range(range_spacing,cycle.range)
-        j = find_range(mean_spacing,cycle.mean)
+        i = find_range(range_spacing,round(cycle.range, nr_digits))
+        j = find_range(mean_spacing,round(cycle.mean, nr_digits))
         bins[i,j] += cycle.count
     end
     return bins
