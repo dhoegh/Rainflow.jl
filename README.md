@@ -1,4 +1,5 @@
 # Rainflow
+[![Build Status](https://travis-ci.org/dhoegh/Rainflow.jl.svg?branch=master)](https://travis-ci.org/dhoegh/Rainflow.jl) [![Coverage Status](https://img.shields.io/coveralls/dhoegh/Rainflow.jl.svg)](https://coveralls.io/r/dhoegh/Rainflow.jl)
 ```Julia
 using PyPlot
 using Rainflow
@@ -25,4 +26,4 @@ bar([1:length(b)],squeeze(b,2),0.75)
 xlim(1,length(b))
 squeeze(b,2) == [24, 2.0, 2.0, 1.5, 1.0, 2.5]
 ```
-[![Build Status](https://travis-ci.org/dhoegh/Rainflow.jl.svg?branch=master)](https://travis-ci.org/dhoegh/Rainflow.jl)
+
