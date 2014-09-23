@@ -85,7 +85,7 @@ end
 
 function find_range{T<:Real}(spacing::Array{T,1},value)
     for i=1:length(spacing)-1
-        if round(spacing[i],15)<= round(value,15) <= round(spacing[i+1],15)
+        if round(spacing[i],14)<= round(value,14) <= round(spacing[i+1],14)
             return i
         end
     end
