@@ -83,6 +83,15 @@ function check_max(cycles::Array{Cycle,1})
     return stats
 end
 
+function find_range{T<:Real}(spacing::Array{T,1},value)
+    for i=1:length(spacing)-1
+        if round(spacing[i],15)<= round(value,15) <= round(spacing[i+1],15)
+            return i
+        end
+    end
+    error("The value where not in range")
+end
+
 function calc_sum{T<:Real}(cycles::Array{Cycle,1}, range_spacing::Array{T,1}, mean_spacing::Array{T,1})
     stats = check_max(cycles)
     bins = zeros(length(range_spacing)-1, length(mean_spacing)-1)
@@ -92,20 +101,9 @@ function calc_sum{T<:Real}(cycles::Array{Cycle,1}, range_spacing::Array{T,1}, me
     mean_spacing += stats.min_mean
     #show(mean_spacing)
     for cycle in cycles
-        k=false
-        for i=1:length(range_spacing)-1
-            if round(range_spacing[i],15)< round(cycle.range,15) <= round(range_spacing[i+1],15)
-                for j=1:length(mean_spacing)-1
-                    if round(mean_spacing[j],15)<= round(cycle.mean,15) <= round(mean_spacing[j+1],15)
-                        bins[i,j] += cycle.count
-                        k=true
-                    end
-                end
-            end
-        end
-        if !k
-            error("A cylce is missed in the counting")
-        end
+        i = find_range(range_spacing,cycle.range)
+        j = find_range(mean_spacing,cycle.mean)
+        bins[i,j] += cycle.count
     end
     return bins
 end
