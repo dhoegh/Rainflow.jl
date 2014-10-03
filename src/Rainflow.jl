@@ -88,39 +88,39 @@ function find_boundary_vals(cycles::Array{Cycle,1})
 end
 
 """ Returns the range index the value is belonging in """
-function find_range{T<:Real}(spacing::Array{T,1},value)
-    for i=1:length(spacing)-1
-        if spacing[i] <= value <= spacing[i+1]
+function find_range{T<:Real}(interval::Array{T,1},value)
+    for i=1:length(interval)-1
+        if interval[i] <= value <= interval[i+1]
             return i
         end
     end
-    error("The value where not in range, see if the vectors in calc_sum(cycles::Array{Cycle,1}, range_spacing::Array{T,1}, mean_spacing::Array{T,1}) are continious increasing in value, or adjust the nr_digits parameter")
+    error("The value where not in range, see if the vectors in calc_sum(cycles::Array{Cycle,1}, range_intervals::Array{T,1}, mean_intervals::Array{T,1}) are continious increasing in value, or adjust the nr_digits parameter")
 end
 
-""" Sums the cycle count given intervals of range_spacing and mean_spacing. """
-function sum_cycles{T<:Real}(cycles::Array{Cycle,1}, range_spacing::Array{T,1}, mean_spacing::Array{T,1})
+""" Sums the cycle count given intervals of range_intervals and mean_intervals. """
+function sum_cycles{T<:Real}(cycles::Array{Cycle,1}, range_intervals::Array{T,1}, mean_intervals::Array{T,1})
     bounds = find_boundary_vals(cycles)
-    bins = zeros(length(range_spacing)-1, length(mean_spacing)-1)
-    range_spacing *= bounds.max_range/100
-    #show(range_spacing)
-    mean_spacing *= (bounds.max_mean-bounds.min_mean)/100
-    mean_spacing += bounds.min_mean
+    bins = zeros(length(range_intervals)-1, length(mean_intervals)-1)
+    range_intervals *= bounds.max_range/100
+    #show(range_intervals)
+    mean_intervals *= (bounds.max_mean-bounds.min_mean)/100
+    mean_intervals += bounds.min_mean
     nr_digits = 14  # The rounding is performed due to numerical noise in the floats when comparing
-    mean_spacing = round(mean_spacing, nr_digits)
-    range_spacing = round(range_spacing, nr_digits)
-    #show(mean_spacing)
+    mean_intervals = round(mean_intervals, nr_digits)
+    range_intervals = round(range_intervals, nr_digits)
+    #show(mean_intervals)
     for cycle in cycles
-        i = find_range(range_spacing,round(cycle.range, nr_digits))
-        j = find_range(mean_spacing,round(cycle.mean, nr_digits))
+        i = find_range(range_intervals,round(cycle.range, nr_digits))
+        j = find_range(mean_intervals,round(cycle.mean, nr_digits))
         bins[i,j] += cycle.count
     end
     return bins
 end
 
 function sum_cycles(cycles::Array{Cycle,1}, nr_ranges::Int=10, nr_means::Int=1)
-    range_spacing = linspace(0,100,nr_ranges+1)
-    mean_spacing = linspace(0,100,nr_means+1)
-    sum_cycles(cycles, range_spacing, mean_spacing)
+    range_intervals = linspace(0,100,nr_ranges+1)
+    mean_intervals = linspace(0,100,nr_means+1)
+    sum_cycles(cycles, range_intervals, mean_intervals)
 end
 
 try
