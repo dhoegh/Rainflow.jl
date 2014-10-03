@@ -1,7 +1,7 @@
 module Rainflow
 import Base.show
 
-export sort_peaks, check_max, find_cycles, calc_sum
+export sort_peaks, find_boundary_vals, count_cycles, sum_cycles
 
 """ This function sort out points where the slope is changing sign."""
 function sort_peaks(signal::AbstractArray{Float64,1}, dt=[0.:length(signal)-1.])
@@ -28,7 +28,7 @@ function cycle(count::Float64, v_s::Float64, t_s::Float64, v_e::Float64, t_e::Fl
 end
 
 """ Count the cycles from the data. """
-function find_cycles(ext_in::Array{Float64,1},t::Array{Float64,1})
+function count_cycles(ext_in::Array{Float64,1},t::Array{Float64,1})
     ext = copy(ext_in) # Makes a copy because there is going to be sorted in the vectors
     time = copy(t)
     i = 1
@@ -68,23 +68,23 @@ function find_cycles(ext_in::Array{Float64,1},t::Array{Float64,1})
     return cycles
 end
 
-type Cycle_stats #
+type Cycles_bounds #
     min_mean::Float64
     max_mean::Float64
     max_range::Float64
 end
 
-show(io::IO,x::Cycle_stats) = print(io, "Cycle stats: min mean value=", x.min_mean, ", max mean value=", x.max_mean, ", max range=",x.max_range)
+show(io::IO,x::Cycles_bounds) = print(io, "Cycles_bounds : min mean value=", x.min_mean, ", max mean value=", x.max_mean, ", max range=",x.max_range)
 
 """ Find the minimum and maximum mean value and maximum range from a vector of cycles. """
-function check_max(cycles::Array{Cycle,1})
-    stats = Cycle_stats(Inf, -Inf, -Inf)
+function find_boundary_vals(cycles::Array{Cycle,1})
+    bounds = Cycles_bounds(Inf, -Inf, -Inf)
     for cycle in cycles
-        cycle.mean > stats.max_mean && setfield!(stats, :max_mean, cycle.mean)
-        cycle.mean < stats.min_mean && setfield!(stats, :min_mean, cycle.mean)
-        cycle.range > stats.max_range && setfield!(stats, :max_range, cycle.range)
+        cycle.mean > bounds.max_mean && setfield!(bounds, :max_mean, cycle.mean)
+        cycle.mean < bounds.min_mean && setfield!(bounds, :min_mean, cycle.mean)
+        cycle.range > bounds.max_range && setfield!(bounds, :max_range, cycle.range)
     end
-    return stats
+    return bounds
 end
 
 """ Returns the range index the value is belonging in """
@@ -98,13 +98,13 @@ function find_range{T<:Real}(spacing::Array{T,1},value)
 end
 
 """ Sums the cycle count given intervals of range_spacing and mean_spacing. """
-function calc_sum{T<:Real}(cycles::Array{Cycle,1}, range_spacing::Array{T,1}, mean_spacing::Array{T,1})
-    stats = check_max(cycles)
+function sum_cycles{T<:Real}(cycles::Array{Cycle,1}, range_spacing::Array{T,1}, mean_spacing::Array{T,1})
+    bounds = find_boundary_vals(cycles)
     bins = zeros(length(range_spacing)-1, length(mean_spacing)-1)
-    range_spacing *= stats.max_range/100
+    range_spacing *= bounds.max_range/100
     #show(range_spacing)
-    mean_spacing *= (stats.max_mean-stats.min_mean)/100
-    mean_spacing += stats.min_mean
+    mean_spacing *= (bounds.max_mean-bounds.min_mean)/100
+    mean_spacing += bounds.min_mean
     nr_digits = 14  # The rounding is performed due to numerical noise in the floats when comparing
     mean_spacing = round(mean_spacing, nr_digits)
     range_spacing = round(range_spacing, nr_digits)
@@ -117,10 +117,10 @@ function calc_sum{T<:Real}(cycles::Array{Cycle,1}, range_spacing::Array{T,1}, me
     return bins
 end
 
-function calc_sum(cycles::Array{Cycle,1}, nr_ranges::Int=10, nr_means::Int=1)
+function sum_cycles(cycles::Array{Cycle,1}, nr_ranges::Int=10, nr_means::Int=1)
     range_spacing = linspace(0,100,nr_ranges+1)
     mean_spacing = linspace(0,100,nr_means+1)
-    calc_sum(cycles, range_spacing, mean_spacing)
+    sum_cycles(cycles, range_spacing, mean_spacing)
 end
 
 try
