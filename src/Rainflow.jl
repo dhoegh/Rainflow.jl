@@ -27,6 +27,7 @@ function cycle(count::Float64, v_s::Float64, t_s::Float64, v_e::Float64, t_e::Fl
     Cycle(count, abs(v_s-v_e), (v_s+v_e)/2, v_s, t_s, v_e, t_e)
 end
 
+""" Count the cycles from the data. """
 function find_cycles(ext_in::Array{Float64,1},t::Array{Float64,1})
     ext = copy(ext_in) # Makes a copy because there is going to be sorted in the vectors
     time = copy(t)
@@ -75,6 +76,7 @@ end
 
 show(io::IO,x::Cycle_stats) = print(io, "Cycle stats: min mean value=", x.min_mean, ", max mean value=", x.max_mean, ", max range=",x.max_range)
 
+""" Find the minimum and maximum mean value and maximum range from a vector of cycles. """
 function check_max(cycles::Array{Cycle,1})
     stats = Cycle_stats(Inf, -Inf, -Inf)
     for cycle in cycles
@@ -85,15 +87,17 @@ function check_max(cycles::Array{Cycle,1})
     return stats
 end
 
+""" Returns the range index the value is belonging in """
 function find_range{T<:Real}(spacing::Array{T,1},value)
     for i=1:length(spacing)-1
         if spacing[i] <= value <= spacing[i+1]
             return i
         end
     end
-    error("The value where not in range, see if the vector is increasing in value, or adjust the nr_digits parameter")
+    error("The value where not in range, see if the vectors in calc_sum(cycles::Array{Cycle,1}, range_spacing::Array{T,1}, mean_spacing::Array{T,1}) are continious increasing in value, or adjust the nr_digits parameter")
 end
 
+""" Sums the cycle count given intervals of range_spacing and mean_spacing. """
 function calc_sum{T<:Real}(cycles::Array{Cycle,1}, range_spacing::Array{T,1}, mean_spacing::Array{T,1})
     stats = check_max(cycles)
     bins = zeros(length(range_spacing)-1, length(mean_spacing)-1)
