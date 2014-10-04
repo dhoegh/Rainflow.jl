@@ -1,5 +1,6 @@
 # Rainflow
 [![Build Status](https://travis-ci.org/dhoegh/Rainflow.jl.svg?branch=master)](https://travis-ci.org/dhoegh/Rainflow.jl) [![Coverage Status](https://img.shields.io/coveralls/dhoegh/Rainflow.jl.svg)](https://coveralls.io/r/dhoegh/Rainflow.jl)
+
 This package contains an implementation of the ASTM E1049-85 rainflow-counting algorithem and it can be used to asses fatigue properties of a structure by reducing a stress spectrum down to simple stress reversals that can be handeled by Palmgren-Miner linear damage rule.
 # Installation
 
