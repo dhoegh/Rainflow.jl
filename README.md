@@ -1,13 +1,26 @@
 # Rainflow
 [![Build Status](https://travis-ci.org/dhoegh/Rainflow.jl.svg?branch=master)](https://travis-ci.org/dhoegh/Rainflow.jl) [![Coverage Status](https://img.shields.io/coveralls/dhoegh/Rainflow.jl.svg)](https://coveralls.io/r/dhoegh/Rainflow.jl)
+This package contains an implementation of the ASTM E1049-85 rainflow-counting algorithem and it can be used to asses fatigue properties of a structure by reducing a stress spectrum down to simple stress reversals that can be handeled by Palmgren-Miner linear damage rule.
+# Installation
+
+The package can be installed by:
+```julia
+Pkg.add("Rainflow")
+```
+If plotting of the cycles is desired PyPlot also needs to be installed and I recommend the use of Continuum Analytics python distribution Anaconda
+```julia
+Pkg.add("PyPlot")
+```
+# Use
+The use of the package can be seen in the following example:
 ```Julia
 using PyPlot
 using Rainflow
 
 signal = randn(100) # Gennerates some random data
-ext, t = sort_peaks(signal) # Sorts the signal to extremums
+ext, t = sort_peaks(signal) # Sorts the signal to local extrema's, could optional take a time vector
 plot([0:length(signal)-1], signal)
-plot(t,ext,"ro")
+plot(t,ext,"ro") # plots extrema's
 cycles = count_cycles(ext,t) # find all the cycles in the data
 plot(cycles) # plot of a whole cycle is not plottet correctly, it plots a cylce from the starting point to where the value that defines the range occur.
 figure()
@@ -22,4 +35,4 @@ bins = sum_cycles(cycles, range_intervals, mean_intervals) # Sums the cycles in 
 figure()
 bar([1:length(bins)],squeeze(bins,2),0.75)
 ```
-
+Don't hesitate to file an issue or pull-request to improve the packages.
