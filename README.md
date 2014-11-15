@@ -36,4 +36,4 @@ bins = sum_cycles(cycles, range_intervals, mean_intervals) # Sums the cycles in 
 figure()
 bar([1:length(bins)],squeeze(bins,2),0.75)
 ```
-Don't hesitate to file an issue or pull-request to improve the packages.
+Don't hesitate to file an issue or pull-request to improve the package.
