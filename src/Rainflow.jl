@@ -7,7 +7,7 @@ export sort_peaks, find_boundary_vals, count_cycles, sum_cycles
 function sort_peaks(signal::AbstractArray{Float64,1}, dt=[0.:length(signal)-1.])
     slope = diff(signal)
     # Determines if the point is local extremum
-    is_extremum = [true ;(slope[1:end-1].*slope[2:end]).<=0.;true]
+    is_extremum = [true, (slope[1:end-1].*slope[2:end]).<=0., true]
     return signal[is_extremum] , dt[is_extremum]
 end
 
@@ -89,16 +89,27 @@ end
 
 """ Returns the range index the value is belonging in """
 function find_range{T<:Real}(interval::Array{T,1},value)
+    issorted(interval) || error("The array needs to be sorted in raising order")
     for i=1:length(interval)-1
         if interval[i] <= value <= interval[i+1]
             return i
         end
     end
-    error("The value where not in range, see if the vectors in calc_sum(cycles::Array{Cycle,1}, range_intervals::Array{T,1}, mean_intervals::Array{T,1}) are continious increasing in value, or adjust the nr_digits parameter")
+    error("The value where not in range")
 end
 
-""" Sums the cycle count given intervals of range_intervals and mean_intervals. """
-function sum_cycles{T<:Real}(cycles::Array{Cycle,1}, range_intervals::Array{T,1}, mean_intervals::Array{T,1})
+""" Returns the range index the value is belonging in """
+function find_range{T<:Real}(interval::LinSpace{T}, value)
+    issorted(interval) || error("The array needs to be sorted in raising order")
+    start = interval.start
+    stop = interval.stop
+    (start < value < stop) || error("The value where not in range, see if the vectors in calc_sum(cycles::Array{Cycle,1}, range_intervals::Array{T,1}, mean_intervals::Array{T,1}) are continious increasing in value, or adjust the nr_digits parameter")
+    inc = (interval.stop - start) / interval.divisor
+    i = int(fld(value - start, inc) ) + 1
+end
+
+""" Sums the cycle count given intervals of range_intervals and mean_intervals. The range_intervals and mean_intervals is given in fraction of range size"""
+function sum_cycles{T<:Real}(cycles::Array{Cycle,1}, range_intervals::Union{Array{T,1}, LinSpace{T}}, mean_intervals::Union{Array{T,1}, LinSpace{T}})
     bounds = find_boundary_vals(cycles)
     bins = zeros(length(range_intervals)-1, length(mean_intervals)-1)
     range_intervals *= bounds.max_range/100
