@@ -99,6 +99,7 @@ function find_range{T<:Real}(interval::Array{T,1},value)
 end
 
 if v"0.4.0-dev+4986" <  VERSION
+    typealias Interval{T} Union{Array{T,1}, LinSpace{T}}
     """ Returns the range index the value is belonging in """
     function find_range{T<:Real}(interval::LinSpace{T}, value)
         issorted(interval) || error("The array needs to be sorted in raising order")
@@ -108,10 +109,12 @@ if v"0.4.0-dev+4986" <  VERSION
         inc = (interval.stop - start) / interval.divisor
         i = int(fld(value - start, inc) ) + 1
     end
+else
+    typealias Interval{T} Array{T,1}
 end
 
 """ Sums the cycle count given intervals of range_intervals and mean_intervals. The range_intervals and mean_intervals is given in fraction of range size"""
-function sum_cycles{T<:Real}(cycles::Array{Cycle,1}, range_intervals::Union{Array{T,1}, LinSpace{T}}, mean_intervals::Union{Array{T,1}, LinSpace{T}})
+function sum_cycles{T<:Real}(cycles::Array{Cycle,1}, range_intervals::Interval{T}, mean_intervals::Interval{T})
     bounds = find_boundary_vals(cycles)
     bins = zeros(length(range_intervals)-1, length(mean_intervals)-1)
     range_intervals *= bounds.max_range/100
