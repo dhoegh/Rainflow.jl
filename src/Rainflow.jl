@@ -98,14 +98,16 @@ function find_range{T<:Real}(interval::Array{T,1},value)
     error("The value where not in range")
 end
 
-""" Returns the range index the value is belonging in """
-function find_range{T<:Real}(interval::LinSpace{T}, value)
-    issorted(interval) || error("The array needs to be sorted in raising order")
-    start = interval.start
-    stop = interval.stop
-    (start < value < stop) || error("The value where not in range, see if the vectors in calc_sum(cycles::Array{Cycle,1}, range_intervals::Array{T,1}, mean_intervals::Array{T,1}) are continious increasing in value, or adjust the nr_digits parameter")
-    inc = (interval.stop - start) / interval.divisor
-    i = int(fld(value - start, inc) ) + 1
+if v"0.4.0-dev+4986" <  VERSION
+    """ Returns the range index the value is belonging in """
+    function find_range{T<:Real}(interval::LinSpace{T}, value)
+        issorted(interval) || error("The array needs to be sorted in raising order")
+        start = interval.start
+        stop = interval.stop
+        (start < value < stop) || error("The value where not in range, see if the vectors in calc_sum(cycles::Array{Cycle,1}, range_intervals::Array{T,1}, mean_intervals::Array{T,1}) are continious increasing in value, or adjust the nr_digits parameter")
+        inc = (interval.stop - start) / interval.divisor
+        i = int(fld(value - start, inc) ) + 1
+    end
 end
 
 """ Sums the cycle count given intervals of range_intervals and mean_intervals. The range_intervals and mean_intervals is given in fraction of range size"""
