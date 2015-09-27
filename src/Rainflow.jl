@@ -122,8 +122,11 @@ function sum_cycles{T<:Real}(cycles::Array{Cycle,1}, range_intervals::Interval{T
     mean_intervals *= (bounds.max_mean-bounds.min_mean)/100
     mean_intervals += bounds.min_mean
     nr_digits = 14  # The rounding is performed due to numerical noise in the floats when comparing
-    mean_intervals = round(mean_intervals, nr_digits)
-    range_intervals = round(range_intervals, nr_digits)
+    if v"0.4.0-dev+4986" >  VERSION || isa(mean_intervals,LinSpace)
+        mean_intervals = round(mean_intervals, nr_digits)
+    elseif if v"0.4.0-dev+4986" >  VERSION || isa(range_intervals,LinSpace)
+        range_intervals = round(range_intervals, nr_digits)
+    end
     #show(mean_intervals)
     for cycle in cycles
         i = find_range(range_intervals,round(cycle.range, nr_digits))
