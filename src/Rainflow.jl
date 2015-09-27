@@ -124,7 +124,7 @@ function sum_cycles{T<:Real}(cycles::Array{Cycle,1}, range_intervals::Interval{T
     nr_digits = 14  # The rounding is performed due to numerical noise in the floats when comparing
     if v"0.4.0-dev+4986" >  VERSION || isa(mean_intervals,LinSpace)
         mean_intervals = round(mean_intervals, nr_digits)
-    elseif if v"0.4.0-dev+4986" >  VERSION || isa(range_intervals,LinSpace)
+    elseif v"0.4.0-dev+4986" >  VERSION || isa(range_intervals,LinSpace)
         range_intervals = round(range_intervals, nr_digits)
     end
     #show(mean_intervals)
