@@ -4,14 +4,14 @@ import Base.show
 export sort_peaks, find_boundary_vals, count_cycles, sum_cycles
 
 """ This function sort out points where the slope is changing sign."""
-function sort_peaks(signal::AbstractArray{Float64,1}, dt=[0.:length(signal)-1.])
+function sort_peaks(signal::AbstractArray{Float64,1}, dt=collect(0.:length(signal)-1.))
     slope = diff(signal)
     # Determines if the point is local extremum
-    is_extremum = [true, (slope[1:end-1].*slope[2:end]).<=0., true]
+    is_extremum = vcat(true, (slope[1:end-1].*slope[2:end]).<=0., true)
     return signal[is_extremum] , dt[is_extremum]
 end
 
-immutable Cycle  # This is the information stored for each cycle found
+struct Cycle  # This is the information stored for each cycle found
     count::Float64
     range::Float64
     mean::Float64  # value
@@ -34,7 +34,7 @@ function count_cycles(ext_in::Array{Float64,1},t::Array{Float64,1})
     i = 1
     j = 2
     cycles = Cycle[]
-    sizehint(cycles, length(ext)) # This reduces the memory consumption a bit
+    sizehint!(cycles, length(ext)) # This reduces the memory consumption a bit
     @inbounds begin
     while length(ext)>(i+1)
         Y = abs(ext[i+1]-ext[i])
@@ -47,11 +47,10 @@ function count_cycles(ext_in::Array{Float64,1},t::Array{Float64,1})
                 shift!(time)
             else # This case counts one cycle and deletes the poit that is counted
                 #println("One cycle $(ext[i]), $(ext[i+1])")
-                push!(cycles,cycle(1. ,ext[i], time[i], ext[i+1],time[i+1]))
-                splice!(ext,i+1)  # Removes the i and i+1 entrance in ext and time
-                splice!(ext,i)
-                splice!(time,i+1)
-                splice!(time,i)
+                push!(cycles,cycle(1. ,ext[i], time[i], ext[i+1], time[i+1]))  
+                # Removes the i and i+1 entrance in ext and time
+                my_deleteat!(ext, i:(i+1))
+                my_deleteat!(time, i:(i+1))
             end
             i = 1
             j = 2
@@ -68,7 +67,7 @@ function count_cycles(ext_in::Array{Float64,1},t::Array{Float64,1})
     return cycles
 end
 
-type Cycles_bounds #
+mutable struct Cycles_bounds #
     min_mean::Float64
     max_mean::Float64
     max_range::Float64
@@ -89,48 +88,40 @@ end
 
 """ Returns the range index the value is belonging in """
 function find_range{T<:Real}(interval::Array{T,1},value)
-    issorted(interval) || error("The array needs to be sorted in raising order")
     for i=1:length(interval)-1
-        if interval[i] <= value <= interval[i+1]
+        if interval[i] <= value < interval[i+1]
             return i
         end
     end
     error("The value where not in range")
 end
 
-if v"0.4.0-dev+4986" <  VERSION
-    typealias Interval{T} Union{Array{T,1}, LinSpace{T}}
-    """ Returns the range index the value is belonging in """
-    function find_range{T<:Real}(interval::LinSpace{T}, value)
-        issorted(interval) || error("The array needs to be sorted in raising order")
-        start = interval.start
-        stop = interval.stop
-        (start < value < stop) || error("The value where not in range, see if the vectors in calc_sum(cycles::Array{Cycle,1}, range_intervals::Array{T,1}, mean_intervals::Array{T,1}) are continious increasing in value, or adjust the nr_digits parameter")
-        inc = (interval.stop - start) / interval.divisor
-        i = int(fld(value - start, inc) ) + 1
-    end
-else
-    typealias Interval{T} Array{T,1}
-end
+    
+Interval{T} = Union{Array{T,1}, StepRangeLen{T}}
 
 """ Sums the cycle count given intervals of range_intervals and mean_intervals. The range_intervals and mean_intervals is given in fraction of range size"""
 function sum_cycles{T<:Real}(cycles::Array{Cycle,1}, range_intervals::Interval{T}, mean_intervals::Interval{T})
     bounds = find_boundary_vals(cycles)
     bins = zeros(length(range_intervals)-1, length(mean_intervals)-1)
-    range_intervals *= bounds.max_range/100
-    #show(range_intervals)
-    mean_intervals *= (bounds.max_mean-bounds.min_mean)/100
-    mean_intervals += bounds.min_mean
+    range_in = (range_intervals*bounds.max_range)/100
+    mean_in = (mean_intervals*(bounds.max_mean-bounds.min_mean))/100
+    mean_in += bounds.min_mean
+    issorted(mean_intervals) || error("The array needs to be sorted in raising order")
+    issorted(range_intervals) || error("The array needs to be sorted in raising order")
     nr_digits = 14  # The rounding is performed due to numerical noise in the floats when comparing
-    if v"0.4.0-dev+4986" >  VERSION || isa(mean_intervals,LinSpace)
-        mean_intervals = round(mean_intervals, nr_digits)
-    elseif v"0.4.0-dev+4986" >  VERSION || isa(range_intervals,LinSpace)
-        range_intervals = round(range_intervals, nr_digits)
-    end
+    mean_i = collect(mean_in)
+    range_i = collect(range_in)
+    #ensure the cycles is in the intervals by adding a small error to the end values of the interal.
+    error_m = (bounds.max_mean-bounds.min_mean)*1e-14
+    mean_i[end]+=error_m
+    mean_i[1]-=error_m
+    error_r = bounds.max_range*1e-14
+    range_i[end]+=error_r
+    range_i[1]-=error_r
     #show(mean_intervals)
     for cycle in cycles
-        i = find_range(range_intervals,round(cycle.range, nr_digits))
-        j = find_range(mean_intervals,round(cycle.mean, nr_digits))
+        i = find_range(range_i, cycle.range)
+        j = find_range(mean_i, cycle.mean)
         bins[i,j] += cycle.count
     end
     return bins
@@ -140,6 +131,25 @@ function sum_cycles(cycles::Array{Cycle,1}, nr_ranges::Int=10, nr_means::Int=1)
     range_intervals = linspace(0,100,nr_ranges+1)
     mean_intervals = linspace(0,100,nr_means+1)
     sum_cycles(cycles, range_intervals, mean_intervals)
+end
+
+# This is necersary because of https://github.com/JuliaLang/julia/issues/24494
+if VERSION<v"0.6.2" && Base.is_windows()
+    function my_deleteat!(a::Vector, r::UnitRange{<:Integer})
+        n = length(a)
+        isempty(r) || _deleteat_beg!(a, first(r), length(r))
+        return a
+    end
+    function _deleteat_beg!(a::Vector, i::Integer, delta::Integer)
+        if i > 1
+            ccall(:memmove, Ptr{Void}, (Ptr{Void}, Ptr{Void}, Csize_t),
+                  pointer(a, 1+delta), pointer(a, 1), (i-1)*Base.elsize(a))
+        end
+        ccall(:jl_array_del_beg, Void, (Any, UInt), a, delta)
+        return a
+    end
+else
+    const my_deleteat! = deleteat!
 end
 
 try
