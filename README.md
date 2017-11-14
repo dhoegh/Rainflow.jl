@@ -36,4 +36,8 @@ bins = sum_cycles(cycles, range_intervals, mean_intervals) # Sums the cycles in 
 figure()
 bar([1:length(bins)],squeeze(bins,2),0.75)
 ```
+
+## Performance note
+The algorithem and functions has been tested on data set of 1e8 numbers, and the sorting and sum the cycles into bins can be performed in less than 20s on a laptop.
+
 Don't hesitate to file an issue or pull-request to improve the package.
