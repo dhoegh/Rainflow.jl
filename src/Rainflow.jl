@@ -11,7 +11,7 @@ function sort_peaks(signal::AbstractArray{Float64,1}, dt=collect(0.:length(signa
     return signal[is_extremum] , dt[is_extremum]
 end
 
-immutable Cycle  # This is the information stored for each cycle found
+struct Cycle  # This is the information stored for each cycle found
     count::Float64
     range::Float64
     mean::Float64  # value
@@ -67,7 +67,7 @@ function count_cycles(ext_in::Array{Float64,1},t::Array{Float64,1})
     return cycles
 end
 
-type Cycles_bounds #
+mutable struct Cycles_bounds #
     min_mean::Float64
     max_mean::Float64
     max_range::Float64
