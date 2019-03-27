@@ -3,7 +3,7 @@ import Base.show
 
 export sort_peaks, find_boundary_vals, count_cycles, sum_cycles
 
-# This function sort out points where the slope is changing sign
+""" This function sort out points where the slope is changing sign"""
 function sort_peaks(signal::AbstractArray{Float64,1}, dt=collect(1.:length(signal)))
     slope = diff(signal)
     # Determines if the point is local extremum
@@ -28,7 +28,7 @@ function cycle(count::Float64, v_s::Float64, t_s::Float64, v_e::Float64, t_e::Fl
     Cycle(count, abs(v_s-v_e), (v_s+v_e)/2, min(v_s,v_e)/max(v_s,v_e), v_s, t_s, v_e, t_e)
 end
 
-# Count the cycles from the data
+""" Count the cycles from the data """
 function count_cycles(peaks::Array{Float64,1},t::Array{Float64,1})
     list = copy(peaks) # Makes a copy because there is going to be sorted in the vectors
     time = copy(t)
@@ -75,7 +75,7 @@ end
 
 show(io::IO,x::Cycles_bounds) = print(io, "Cycles_bounds : min mean value=", x.min_mean, ", max mean value=", x.max_mean, ", max range=",x.max_range, ", min R=", x.min_R, ", max R=",x.max_R)
 
-# Find the minimum and maximum mean value and maximum range from a vector of cycles
+""" Find the minimum and maximum mean value and maximum range from a vector of cycles"""
 function find_boundary_vals(cycles::Array{Cycle,1})
     bounds = Cycles_bounds(Inf, -Inf, -Inf, Inf, -Inf)
     for cycle in cycles
@@ -88,8 +88,8 @@ function find_boundary_vals(cycles::Array{Cycle,1})
     return bounds
 end
 
-# Returns the range index the value is belonging in
-function find_range(interval,value)
+""" Returns the range index the value is belonging in """
+function find_range(interval::Array{T,1},value) where {T <: Real}
     for i=1:length(interval)-1
         if interval[i] <= value < interval[i+1]
             return i
@@ -100,7 +100,7 @@ end
 
 Interval{T} = Union{Array{T,1}, StepRangeLen{T}}
 
-# Sums the cycle count given intervals of range_intervals and mean_intervals. The range_intervals and mean_intervals is given in fraction of range size
+""" Sums the cycle count given intervals of range_intervals and mean_intervals. The range_intervals and mean_intervals is given in fraction of range size"""
 function sum_cycles(cycles::Array{Cycle,1}, range_intervals::Interval{T}, mean_intervals::Interval{T}) where {T <: Real}
     bounds = find_boundary_vals(cycles)
     bins = zeros(length(range_intervals)-1, length(mean_intervals)-1)
