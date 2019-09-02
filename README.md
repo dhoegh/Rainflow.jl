@@ -8,33 +8,37 @@ The package can be installed by:
 ```julia
 Pkg.add("Rainflow")
 ```
-If plotting of the cycles is desired PyPlot also needs to be installed and I recommend the use of Continuum Analytics python distribution Anaconda
+And a plotting package to visualize the results:
 ```julia
-Pkg.add("PyPlot")
+Pkg.add("Plots")
 ```
 # Use
 The use of the package can be seen in the following example:
 ```Julia
-using PyPlot
 using Rainflow
+using Plots
 
-signal = randn(100) # Gennerates some random data
-ext, t = sort_peaks(signal) # Sorts the signal to local extrema's, could optional take a time vector
-plot(collect(0:length(signal)-1), signal)
-plot(t,ext,"ro") # plots extrema's
-cycles = count_cycles(ext, t) # find all the cycles in the data
-plot.(cycles) # plot of a whole cycle is not plottet correctly, it plots a cylce from the starting point to where the value that defines the range occur.
-figure()
-plot(cycles[1])
+signal = 10*randn(100); # Gennerates some random data
+extremum, t = sort_peaks(signal) # Sorts the signal to local extrema's, could optional take a time vector
+plot(signal)
+scatter!(t,extremum) # plots extrema's
+cycles = count_cycles(extremum, t) # find all the cycles in the data
+
 bins = sum_cycles(cycles, 10, 1) # Sums the cycles together dependant on intervals, here there is 10 range interval and one mean interval
-figure()
-bar(collect(1:length(bins)), squeeze(bins,2), 0.75)
+bar(bins)
 
 range_intervals = [0, 40, 45, 50, 55, 60, 100.] # There can also be specified user defined intervals
 mean_intervals = [0.,100.] # The intevals needs to go from 0-100
 bins = sum_cycles(cycles, range_intervals, mean_intervals) # Sums the cycles in the given intervals
-figure()
-bar(collect(1:length(bins)), squeeze(bins,2), 0.75)
+
+# Plotting the results with the user defined intervals
+boundaries = find_boundary_vals(cycles); # Find the min max values to scale or interpolate the calculated values
+range_values = range_intervals/100*boundaries.max_range # Scale the range values
+# The bar plot in julia only takes integer array as tick marks
+range_values = collect(Iterators.drop(range_values,1)) # Drop the interval with 0 amplitude
+range_values = map(x->round.(x), range_values) # round off the values so they can be converted to Int
+range_values = convert(Array{Int64,1},range_values); # Convert the array to Int
+bar(range_values, bins, xticks = range_values)
 ```
 
 ## Performance note
