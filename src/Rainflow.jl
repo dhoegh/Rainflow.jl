@@ -2,7 +2,7 @@ module Rainflow
 
 export sort_peaks, find_boundary_vals, count_cycles, sum_cycles, rainflow, rainflow!
 
-# Interval{T} = Union{Vector{T}, StepRangeLen{T}}
+Interval{T} = Union{Vector{T}, StepRangeLen{T}}
 struct Cycle  # This is the information stored for each cycle found
     count  ::Float16  # only 1 or 0.5 
     range  ::Float32
