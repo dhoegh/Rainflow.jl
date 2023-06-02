@@ -38,7 +38,6 @@ end
 function cycle(count, v_s, t_s, v_e, t_e)
     Cycle(count, abs(v_s-v_e), (v_s+v_e)/2, min(v_s,v_e)/max(v_s,v_e), v_s, t_s, v_e, t_e, t_e-t_s)
 end
-end
 
 """ Count the cycles from the data """
 function count_cycles(peaks::Vector{T}, t::Vector{S}) where {T, S <: Real}
@@ -129,7 +128,7 @@ function sum_cycles(cycles::Vector{Cycle}, range_intervals::Interval{T}, mean_in
         j = find_range(mean_i, cycle.mean)
         bins[i,j] += cycle.count
     end
-
+end
 rainflow(x::AbstractVector, args...) = rainflow(1:1:length(x), x, args...)
 function rainflow(t::AbstractVector, x::AbstractVector, args...)
     y, t1  = sort_peaks(x, t)
