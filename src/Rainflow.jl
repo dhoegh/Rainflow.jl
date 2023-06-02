@@ -14,7 +14,6 @@ struct Cycle  # This is the information stored for each cycle found
     t_e    ::Float32   # time end
     dt     ::Float32   # t_e - t_s
 end
-end
 
 mutable struct Cycles_bounds #
     min_mean  ::Float64
