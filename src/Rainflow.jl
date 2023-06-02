@@ -1,17 +1,19 @@
 module Rainflow
 
-export sort_peaks, find_boundary_vals, count_cycles, sum_cycles, rainflow
+export sort_peaks, find_boundary_vals, count_cycles, sum_cycles, rainflow, rainflow!
 
-Interval{T} = Union{Vector{T}, StepRangeLen{T}}
+# Interval{T} = Union{Vector{T}, StepRangeLen{T}}
 struct Cycle  # This is the information stored for each cycle found
-    count  ::Float64
-    range  ::Float64
-    mean   ::Float64
-    Rvalue ::Float64   # value
-    v_s    ::Float64   # value start
-    t_s    ::Float64   # time start
-    v_e    ::Float64   # value end
-    t_e    ::Float64   # time end
+    count  ::Float16  # only 1 or 0.5 
+    range  ::Float32
+    mean   ::Float32
+    Rvalue ::Float32   # ratio min(v_s, v_e) / max(v_s, v_e)
+    v_s    ::Float32   # value start
+    t_s    ::Float32   # time start
+    v_e    ::Float32   # value end
+    t_e    ::Float32   # time end
+    dt     ::Float32   # t_e - t_s
+end
 end
 
 mutable struct Cycles_bounds #
@@ -22,7 +24,7 @@ mutable struct Cycles_bounds #
     max_R     ::Float64
 end
 
-Base.show(io::IO,x::Cycle) = print(io, "Cycle: count=", x.count, ", range=",x.range, ", mean=",x.mean, ", R=", x.Rvalue)
+Base.show(io::IO,x::Cycle) = print(io, "Cycle: count=", x.count, ", range=",x.range, ", mean=",x.mean, ", R=", x.Rvalue, ", dt=", x.dt)
 
 Base.show(io::IO,x::Cycles_bounds) = print(io, "Cycles_bounds : min mean value=", x.min_mean, ", max mean value=", x.max_mean, ", max range=",x.max_range, ", min R=", x.min_R, ", max R=",x.max_R)
 
@@ -35,7 +37,8 @@ function sort_peaks(signal::AbstractVector, dt=collect(1.:length(signal)))
 end
 
 function cycle(count, v_s, t_s, v_e, t_e)
-    Cycle(count, abs(v_s-v_e), (v_s+v_e)/2, min(v_s,v_e)/max(v_s,v_e), v_s, t_s, v_e, t_e)
+    Cycle(count, abs(v_s-v_e), (v_s+v_e)/2, min(v_s,v_e)/max(v_s,v_e), v_s, t_s, v_e, t_e, t_e-t_s)
+end
 end
 
 """ Count the cycles from the data """
@@ -127,13 +130,22 @@ function sum_cycles(cycles::Vector{Cycle}, range_intervals::Interval{T}, mean_in
         j = find_range(mean_i, cycle.mean)
         bins[i,j] += cycle.count
     end
+
+rainflow(x::AbstractVector, args...) = rainflow(1:1:length(x), x, args...)
+function rainflow(t::AbstractVector, x::AbstractVector, args...)
+    y, t1  = sort_peaks(x, t)
+    res    = count_cycles(y, t1)
+    bounds = find_boundary_vals(res)
+    range_i, mean_i = set_rangemx(bounds, args...)
+    bins   = zeros(length(range_i)-1, length(mean_i)-1)
+    sum_cycles!(bins, res, range_i, mean_i)
     return bins
 end
 
-function sum_cycles(cycles::Vector{Cycle}, nr_ranges::Int=10, nr_means::Int=1)
-    range_intervals = range(0, stop = 100, length = nr_ranges +1)
-    mean_intervals  = range(0, stop = 100, length = nr_means  +1)
-    sum_cycles(cycles, range_intervals, mean_intervals)
+function rainflow!(bins::AbstractMatrix, t::AbstractVector, x::AbstractVector, range_i::AbstractVector, mean_i::AbstractVector, args...)
+    y, t1  = sort_peaks(x, t)
+    res    = count_cycles(y, t1)
+    sum_cycles!(bins, res, range_i, mean_i, args...)
 end
 
 function rainflow(t, x, args...)
