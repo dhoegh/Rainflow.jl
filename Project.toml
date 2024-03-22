@@ -1,4 +1,7 @@
 name = "Rainflow"
 uuid = "796b33a9-fac7-4e05-a621-6f2320527dc1"
-authors = ["Daniel Høegh <dho@rdas.dk>"]
-version = "0.1.0"
+authors = ["Kevin Moore <kevmoor@sandia.gov and Daniel Høegh <dho@rdas.dk>"]
+version = "0.2.0"
+
+[deps]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
