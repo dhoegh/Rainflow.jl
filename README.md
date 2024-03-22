@@ -39,6 +39,10 @@ range_values = collect(Iterators.drop(range_values,1)) # Drop the interval with 
 range_values = map(x->round.(x), range_values) # round off the values so they can be converted to Int
 range_values = convert(Array{Int64,1},range_values); # Convert the array to Int
 bar(range_values, bins, xticks = range_values)
+
+# The following single call convenience function can also be used
+Ncycles,meanIntervals,rangeIntervals,equivalentLoad = Rainflow.rainflow(signal;nbins_range=5,nbins_mean=1,m=3,Teq=1)
+
 ```
 
 ## Performance note
